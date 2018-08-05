@@ -1,0 +1,8 @@
+version: '3.4'
+
+services:
+  eflmanagementapi:
+    image: ${DOCKER_REGISTRY}/playground
+    build:
+      context: .
+      dockerfile: EFLManagementAPI/Dockerfile
