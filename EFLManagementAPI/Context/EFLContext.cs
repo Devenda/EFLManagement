@@ -8,7 +8,7 @@ using MySql.Data.EntityFrameworkCore.Extensions;
 
 namespace EFLManagementAPI.Context
 {
-    public class LibraryContext : DbContext
+    public class EFLContext : DbContext
     {
         public DbSet<Card> Card { get; set; }
         public DbSet<Presence> Presence { get; set; }
@@ -16,32 +16,32 @@ namespace EFLManagementAPI.Context
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseMySQL("server=localhost;database=library;user=user;password=password");
+            optionsBuilder.UseMySQL($"???");
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<Card>(entity =>
-            {
-                entity.HasKey(e => e.CardId);
-                entity.HasOne(e => e.User)
-                  .WithMany(c => c.Cards);
-            });
+            //modelBuilder.Entity<Card>(entity =>
+            //{
+            //    entity.HasKey(e => e.CardId);
+            //    entity.HasOne(e => e.User)
+            //      .WithMany(c => c.Cards);
+            //});
 
-            modelBuilder.Entity<Presence>(entity =>
-            {
-                entity.HasKey(e => e.PresenceId);
-                entity.HasOne(e => e.User)
-                  .WithMany(p => p.Presence);
-            });
+            //modelBuilder.Entity<Presence>(entity =>
+            //{
+            //    entity.HasKey(e => e.PresenceId);
+            //    entity.HasOne(e => e.User)
+            //      .WithMany(p => p.Presence);
+            //});
 
-            modelBuilder.Entity<User>(entity =>
-            {
-                entity.HasKey(e => e.UserId);
-                entity.HasMany(e => e.Cards);
-            });
+            //modelBuilder.Entity<User>(entity =>
+            //{
+            //    entity.HasKey(e => e.UserId);
+            //    entity.HasMany(e => e.Cards);
+            //});
         }
     }
 }

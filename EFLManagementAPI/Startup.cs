@@ -14,6 +14,7 @@ using Microsoft.Extensions.Options;
 using NJsonSchema;
 using NSwag.AspNetCore;
 using System.Reflection;
+using EFLManagementAPI.Context;
 
 namespace EFLManagementAPI
 {
@@ -35,11 +36,14 @@ namespace EFLManagementAPI
             services.AddHostedService<RFIDScanner>();
 #endif
 
+            //Context
+            services.AddDbContext<EFLContext>();
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
-        {
+        {            
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
