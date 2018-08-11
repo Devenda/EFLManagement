@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using EFLManagementAPI.Entities;
 using Microsoft.EntityFrameworkCore;
-using MySql.Data.EntityFrameworkCore.Extensions;
 
 namespace EFLManagementAPI.Context
 {
@@ -14,9 +13,10 @@ namespace EFLManagementAPI.Context
         public DbSet<Presence> Presence { get; set; }
         public DbSet<User> User { get; set; }
 
+        public EFLContext(DbContextOptions<EFLContext> dbContextOptions) : base(dbContextOptions) { }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseMySQL($"???");
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using EFLManagementAPI.Context;
+using EFLManagementAPI.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -21,16 +22,16 @@ namespace EFLManagementAPI.Controllers
 
         // GET: api/Presence
         [HttpGet]
-        public IEnumerable<string> Get()
+        public IEnumerable<Card> Get()
         {
-            return new string[] { "value1", "value2" };
+            return _eflContext.Card.ToList();
         }
 
         // GET: api/Presence/5
         [HttpGet("{id}", Name = "Get")]
         public string Get(int id)
         {
-            return "value";
+            return _eflContext.Card.First().ToString();
         }
 
         // POST: api/Presence

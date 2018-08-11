@@ -1,20 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using EFLManagement.Services;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using NJsonSchema;
 using NSwag.AspNetCore;
 using System.Reflection;
 using EFLManagementAPI.Context;
+using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace EFLManagementAPI
 {
@@ -37,7 +32,14 @@ namespace EFLManagementAPI
 #endif
 
             //Context
-            services.AddDbContext<EFLContext>();
+            string connString = Configuration["EFLManagement:MySqlConnectionString"];
+            services.AddDbContextPool<EFLContext>( // replace "YourDbContext" with the class name of your DbContext
+                options => options.UseMySql(connString, // replace with your Connection String
+                    mysqlOptions =>
+                    {
+                        mysqlOptions.ServerVersion(new Version(5, 6, 34), ServerType.MySql); // replace with your Server Version and Type
+                    }
+            ));
 
         }
 
