@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace EFLManagementAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/user")]
     [ApiController]
     public class UserController : ControllerBase
     {
@@ -32,20 +32,24 @@ namespace EFLManagementAPI.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public ActionResult<User> GetById(int id)
         {
-            return null;
+            return _eflContext.User.Where(u => u.UserId == id).FirstOrDefault();
         }
 
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public ActionResult<User> Create(User user)
+        public ActionResult<User> Create([FromBody] User user)
         {
-            return null;
+            _eflContext.User.Add(user);
+            _eflContext.SaveChanges();
+
+            return Created("PostUser", user);
         }
 
         [HttpPut]
+        [Route("{id}/link")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public IActionResult LinkCard(int cardId)
+        public IActionResult LinkCard(int id, int cardId)
         {
             return null;
         }
