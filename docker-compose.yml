@@ -5,4 +5,4 @@ services:
     image: ${DOCKER_REGISTRY}/playground
     build:
       context: .
-      dockerfile: EFLManagementAPI/Dockerfile
+      dockerfile: EFLManagementAPI/Dockerfile    
