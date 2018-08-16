@@ -14,9 +14,12 @@
     </None>
     <None Include="docker-compose.yml" />
     <None Include=".dockerignore" />
-    <None Include="sshTunnel\dockerfile" />
-    <None Include="sshTunnel\entrypoint.sh" />
-    <None Include="sshTunnel\id_rsa" />
+    <None Include="LocalTunnel\dockerfile" />
+    <None Include="LocalTunnel\entrypoint.sh" />
+    <None Include="LocalTunnel\id_rsa" />
+    <None Include="RemoteTunnel\dockerfile" />
+    <None Include="RemoteTunnel\entrypoint.sh" />
+    <None Include="RemoteTunnel\id_rsa" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="NewFolder1\" />
