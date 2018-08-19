@@ -19,6 +19,5 @@ namespace EFLManagementAPI.Entities
 
         [Required]
         public DateTime TimestampRegistration { get; set; }
-
     }
 }

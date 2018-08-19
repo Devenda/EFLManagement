@@ -46,12 +46,6 @@ namespace EFLManagementAPI.Controllers
             return Created("PostUser", user);
         }
 
-        [HttpPut]
-        [Route("{id}/link")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public IActionResult LinkCard(int id, int cardId)
-        {
-            return null;
-        }
+        
     }
 }

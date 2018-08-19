@@ -18,38 +18,6 @@ namespace EFLManagementAPI.Controllers
         public PresenceController(EFLContext eflContext)
         {
             _eflContext = eflContext;
-        }
-
-        // GET: api/Presence
-        [HttpGet]
-        public IEnumerable<Card> Get()
-        {
-            return _eflContext.Card.ToList();
-        }
-
-        // GET: api/Presence/5
-        [HttpGet("{id}", Name = "Get")]
-        public string Get(int id)
-        {
-            return _eflContext.Card.First().ToString();
-        }
-
-        // POST: api/Presence
-        [HttpPost]
-        public void Post([FromBody] string value)
-        {
-        }
-
-        // PUT: api/Presence/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-        }
-
-        // DELETE: api/ApiWithActions/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
-        }
+        }           
     }
 }
