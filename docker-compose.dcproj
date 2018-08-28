@@ -9,17 +9,15 @@
     <DockerServiceName>eflmanagementapi</DockerServiceName>
   </PropertyGroup>
   <ItemGroup>
+    <None Include=".gitignore" />
     <None Include="docker-compose.override.yml">
       <DependentUpon>docker-compose.yml</DependentUpon>
     </None>
     <None Include="docker-compose.yml" />
     <None Include=".dockerignore" />
-    <None Include="LocalTunnel\dockerfile" />
-    <None Include="LocalTunnel\entrypoint.sh" />
-    <None Include="LocalTunnel\id_rsa" />
-    <None Include="RemoteTunnel\dockerfile" />
-    <None Include="RemoteTunnel\entrypoint.sh" />
-    <None Include="RemoteTunnel\id_rsa" />
+    <None Include="Tunnel\dockerfile" />
+    <None Include="Tunnel\entrypoint.sh" />
+    <None Include="Tunnel\id_rsa" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="NewFolder1\" />

@@ -2,6 +2,9 @@ version: '3.4'
 
 services:
   eflmanagementapi:
+    build:
+      context: .
+      dockerfile: EFLManagementAPI/Dockerfile
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=https://+:443;http://+:80
@@ -13,38 +16,6 @@ services:
       - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
       - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
   localtunnel:
-    image: localtunnelimage
-    build: ./LocalTunnel
-    container_name: localtunnel
-    environment:
-      - SSH_HOSTUSER=ecofablab
-      - SSH_HOSTNAME=67.205.12.211 #chondu.dreamhost.com
-      - SSH_TUNNEL_REMOTE=3306
-      - SSH_TUNNEL_HOST=208.97.161.118 #mysql.ecofablab.be
-      - SSH_TUNNEL_LOCAL=3306 #mysql.ecofablab.be mysql port
-      - SSH_MODE=-Ng -L #Local forward mode (vs -R remote forward mode)
-      - SSH_KEY_FILE=/ssh/id_rsa  
-    restart: always
-    volumes:
-      - ./LocalTunnel:/key #mount host current directory ./sshTunnel to container /key
-    dns:
-      - 8.8.8.8
-      - 4.2.2.4
+    image: devenda/sshtunnel:linux
   remotetunnel:
-    image: remotetunnelimage
-    build: ./RemoteTunnel
-    container_name: remotetunnel
-    environment:
-      - SSH_HOSTUSER=ecofablab
-      - SSH_HOSTNAME=67.205.12.211 #chondu.dreamhost.com
-      - SSH_TUNNEL_REMOTE=2222
-      - SSH_TUNNEL_HOST=host.docker.internal #resolves to ip of host
-      - SSH_TUNNEL_LOCAL=80 #API port
-      - SSH_MODE=-R #Local forward mode (vs -R remote forward mode)
-      - SSH_KEY_FILE=/ssh/id_rsa  
-    restart: always
-    volumes:
-      - ./RemoteTunnel:/key #mount host current directory ./sshTunnel to container /key
-    # dns: # when using DNS does not resolve host.docker.internal
-    # - 8.8.8.8
-    # - 4.2.2.4
+    image: devenda/sshtunnel:linux

@@ -3,6 +3,7 @@ using NJsonSchema;
 using NSwag.AspNetCore;
 using System.Reflection;
 using EFLManagementAPI.Context;
+using EFLManagement.Services;
 using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
@@ -15,9 +16,12 @@ namespace EFLManagementAPI
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        private IHostingEnvironment _env;
+
+        public Startup(IConfiguration configuration, IHostingEnvironment env)
         {
             Configuration = configuration;
+            _env = env;
         }
 
         public IConfiguration Configuration { get; }
@@ -32,7 +36,9 @@ namespace EFLManagementAPI
 #endif
 
             //Context
-            string connString = Configuration["EFLManagement:MySqlConnectionString"];
+            //env in ConfigureServices? https://stackoverflow.com/questions/46871963/asp-net-core-2-how-to-access-ihostingenvironment-in-configureservices
+            string connString = _env.IsDevelopment() ? Configuration["EFLManagement:MySqlConnectionString"] : Environment.GetEnvironmentVariable("CONNECTION_STRING");
+
             services.AddDbContextPool<EFLContext>( // replace "YourDbContext" with the class name of your DbContext
                 options => options.UseMySql(connString, // replace with your Connection String
                     mysqlOptions =>
@@ -56,7 +62,7 @@ namespace EFLManagementAPI
             }
 
             // Enable the Swagger UI middleware and the Swagger generator
-            app.UseSwaggerUi(typeof(Startup).GetTypeInfo().Assembly, settings =>
+            app.UseSwaggerUi3WithApiExplorer(settings =>
             {
                 settings.GeneratorSettings.DefaultPropertyNameHandling =
                     PropertyNameHandling.CamelCase;
