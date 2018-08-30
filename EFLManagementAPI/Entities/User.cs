@@ -25,6 +25,7 @@ namespace EFLManagementAPI.Entities
         public int Postcode { get; set; }
         public string Comment { get; set; }
         public DateTime TimestampRegistration { get; set; }
+        public bool IsAdmin { get; set; }
 
         public List<Presence> Presence { get; set; }
         public List<Card> Cards { get; set; }
