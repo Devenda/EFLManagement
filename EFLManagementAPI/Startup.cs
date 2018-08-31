@@ -1,16 +1,14 @@
-﻿using System;
-using NJsonSchema;
-using NSwag.AspNetCore;
-using System.Reflection;
-using EFLManagementAPI.Context;
-using EFLManagement.Services;
-using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Mvc;
+﻿using EFLManagementAPI.Context;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using NJsonSchema;
+using NSwag.AspNetCore;
+using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
+using System;
 
 namespace EFLManagementAPI
 {
@@ -47,11 +45,19 @@ namespace EFLManagementAPI
                     }
             ));
 
+            // Configure CORS
+            services.AddCors(corsOptions => corsOptions.AddPolicy(
+                "Default",
+                corsPolicyBuilder => corsPolicyBuilder
+                    .AllowAnyOrigin()
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()));
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
-        {            
+        {
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -67,6 +73,13 @@ namespace EFLManagementAPI
                 settings.GeneratorSettings.DefaultPropertyNameHandling =
                     PropertyNameHandling.CamelCase;
             });
+
+            // Configure CORS
+            app.UseCors(builder =>
+                builder.AllowAnyOrigin()
+                       .AllowAnyHeader()
+                       .AllowAnyMethod()
+                );
 
             app.UseHttpsRedirection();
             app.UseMvc();

@@ -3,14 +3,16 @@ using System;
 using EFLManagementAPI.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace EFLManagementAPI.Migrations
 {
     [DbContext(typeof(EFLContext))]
-    partial class EFLContextModelSnapshot : ModelSnapshot
+    [Migration("20180830104242_useradmin")]
+    partial class useradmin
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
