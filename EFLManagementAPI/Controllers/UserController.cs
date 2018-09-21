@@ -21,14 +21,16 @@ namespace EFLManagementAPI.Controllers
         }
 
         [HttpGet]
-        [Route("all")]
-        public ActionResult<IList<User>> GetAll()
+        //[Route("all")]
+        [ProducesResponseType(typeof(List<User>), StatusCodes.Status200OK)]
+        public ActionResult<List<User>> GetAll()
         {
             return _eflContext.User.ToList();
         }
 
         [HttpGet]
         [Route("{id}")]
+        [ProducesResponseType(typeof(User), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public ActionResult<User> GetById(int id)
         {

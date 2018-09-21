@@ -59,7 +59,7 @@
       "enumNameGeneratorType": null,
       "serviceHost": null,
       "serviceSchemes": null,
-      "output": "../../../../../Projects/EFLManagement Client/efl-management/src/app/core/services/api.service.ts"
+      "output": "../../../../../Projects/efl-management-client/src/app/core/services/api.service.ts"
     }
   }
 }

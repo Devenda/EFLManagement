@@ -9,6 +9,10 @@ using NJsonSchema;
 using NSwag.AspNetCore;
 using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 using System;
+using EFLManagementAPI.Hubs;
+using Microsoft.AspNetCore.SignalR;
+using Newtonsoft.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace EFLManagementAPI
 {
@@ -27,7 +31,12 @@ namespace EFLManagementAPI
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
+                    //https://stackoverflow.com/questions/34753498/self-referencing-loop-detected-in-asp-net-core
+                    .AddJsonOptions(options => {
+                        options.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
+                        options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
+                    });
 
 #if RELEASE
             services.AddHostedService<RFIDScanner>();
@@ -51,13 +60,20 @@ namespace EFLManagementAPI
                 corsPolicyBuilder => corsPolicyBuilder
                     .AllowAnyOrigin()
                     .AllowAnyHeader()
-                    .AllowAnyMethod()));
+                    .AllowAnyMethod()
+                    .AllowCredentials()));
 
+            services.AddSignalR();
+
+            //SignalR hubs
+            services.AddTransient<CardHub>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
+            
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -75,14 +91,14 @@ namespace EFLManagementAPI
             });
 
             // Configure CORS
-            app.UseCors(builder =>
-                builder.AllowAnyOrigin()
-                       .AllowAnyHeader()
-                       .AllowAnyMethod()
-                );
+            app.UseCors("Default");
 
             app.UseHttpsRedirection();
-            app.UseMvc();
+            app.UseSignalR(routes =>
+            {
+                routes.MapHub<CardHub>("/cardhub");
+            });
+            app.UseMvc();            
         }
     }
 }

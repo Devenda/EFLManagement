@@ -28,7 +28,7 @@ services:
       - SSH_HOSTNAME=67.205.12.211 #chondu.dreamhost.com
       - SSH_TUNNEL_REMOTE=4444
       - SSH_TUNNEL_HOST=host.docker.internal #resolves to ip of host
-      - SSH_TUNNEL_LOCAL=80 #API port
+      - SSH_TUNNEL_LOCAL=44305 #API port
       - SSH_MODE=-R #Local forward mode (vs -R remote forward mode)
       - SSH_KEY_FILE=/ssh/id_rsa  
     restart: always
