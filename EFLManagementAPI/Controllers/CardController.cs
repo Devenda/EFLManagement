@@ -1,6 +1,7 @@
 ﻿using EFLManagementAPI.Context;
 using EFLManagementAPI.Entities;
 using EFLManagementAPI.Hubs;
+using EFLManagementAPI.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -75,6 +76,31 @@ namespace EFLManagementAPI.Controllers
             await _cardHub.SendMessage(code);
 
             return StatusCode(200);
+        }
+
+        [HttpDelete]
+        [Route("delete/{id}")]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public ActionResult<Card> DeleteCard(int id)
+        {
+            try
+            {
+                var card = _eflContext.Card.Where(c => c.CardId == id).FirstOrDefault();
+
+                if (card == null) return StatusCode(404, new Error() { Message = $"No Card found with id {id}" });
+
+                _eflContext.Card.Remove(card);
+                _eflContext.SaveChanges();
+
+                return card;
+            }
+            catch (Exception ex)
+            {
+                string message = $"Something went wrong while deleting card with {id}";
+                //_logger.LogError(ex, message);
+
+                return StatusCode(500, new Error() { Message = message, InnerException = ex.InnerException.ToString(), StackTrace = ex.StackTrace });
+            }
         }
     }
 }

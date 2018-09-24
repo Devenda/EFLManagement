@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using EFLManagementAPI.Context;
+﻿using EFLManagementAPI.Context;
 using EFLManagementAPI.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace EFLManagementAPI.Controllers
 {
@@ -47,7 +45,5 @@ namespace EFLManagementAPI.Controllers
 
             return Created("PostUser", user);
         }
-
-        
     }
 }
