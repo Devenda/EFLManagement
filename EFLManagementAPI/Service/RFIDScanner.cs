@@ -1,20 +1,41 @@
-﻿using Input_event;
+﻿using EFLManagementAPI.Context;
+using EFLManagementAPI.Entities;
+using EFLManagementAPI.Hubs;
+using Input_event;
 using Input_event.InputDevices;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using static Input_Event.Devices.InputDevice;
 
 namespace EFLManagement.Services
 {
     internal class RFIDScanner : IHostedService
     {
         Keyboard _keyboard;
-        private string _EventPath = "/dev/input/event0";
+        private readonly string _eventPath = "/dev/input/event0";
+
+        //https://stackoverflow.com/questions/48368634/how-should-i-inject-a-dbcontext-instance-into-an-ihostedservice
+        private readonly IServiceScopeFactory _scopeFactory;
+        private readonly ILogger<RFIDScanner> _loggerRFIDScanner;
+
+        private readonly HubLifetimeManager<CardHub> _cardHubManager;
+        private readonly HubLifetimeManager<PresenceHub> _presenceHubManager;
+
+
+        public RFIDScanner(IServiceScopeFactory scopeFactory, ILogger<RFIDScanner> loggerRFIDScanner,
+            HubLifetimeManager<CardHub> cardHubManager, HubLifetimeManager<PresenceHub> presenceHubManager)
+        {
+            _scopeFactory = scopeFactory;
+            _loggerRFIDScanner = loggerRFIDScanner;
+            _cardHubManager = cardHubManager;
+            _presenceHubManager = presenceHubManager;
+        }
 
         readonly Dictionary<Keyboard.InputEventCode, char> buttonValues = new Dictionary<Keyboard.InputEventCode, char>()
         {
@@ -35,36 +56,82 @@ namespace EFLManagement.Services
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            _keyboard = new Keyboard(new InputEvent(_EventPath));
+            _loggerRFIDScanner.LogInformation($"Starting RFIDScanner");
+
+            _keyboard = new Keyboard(new InputEvent(_eventPath));
             _keyboard.ButtonDownEvent += Keyboard_ButtonDownEvent;
             _keyboard.Start();
+
+            _loggerRFIDScanner.LogInformation($"Started RFIDScanner");
 
             return Task.CompletedTask;
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            _keyboard.Stop();
+            _keyboard?.Stop();
 
             return Task.CompletedTask;
         }
 
         internal void Keyboard_ButtonDownEvent(object sender, Keyboard.InputEventArgs e)
         {
+            //_loggerRFIDScanner.LogInformation("Received keyboard event");
             if (e.Code != Keyboard.InputEventCode.KEY_ENTER)
             {
-                Console.WriteLine("Button down: {0}", e);
+                //_loggerRFIDScanner.LogInformation($"Button down: {e}");
                 _cardNumberPartial.Add(buttonValues[e.Code]);
             }
             else if (e.Code == Keyboard.InputEventCode.KEY_ENTER)
             {
-                _cardNumber = String.Concat(_cardNumberPartial);
-                Console.WriteLine($"Card Number: {_cardNumber}");
+                _cardNumber = string.Concat(_cardNumberPartial);
+                _loggerRFIDScanner.LogInformation($"Card scanned with number: {_cardNumber}");
+                ProcessCardScan(_cardNumber);
                 _cardNumberPartial.Clear();
             }
             else
             {
-                //TODO TSC: Key not supported
+                _loggerRFIDScanner.LogWarning($"Unsupported key scanned with code: {e.Code}");
+            }
+        }
+
+        private void ProcessCardScan(string cardNumber)
+        {
+            try
+            {
+                using (var scope = _scopeFactory.CreateScope())
+                {
+                    EFLContext _eflContext = scope.ServiceProvider.GetRequiredService<EFLContext>();
+
+                    var card = _eflContext.Card.Where(c => c.CardCode == cardNumber).FirstOrDefault();
+                    if (card == null)
+                    {
+                        _loggerRFIDScanner.LogWarning($"Unregistered card scanned, will be send to client for registration.");
+                        _cardHubManager.SendAllAsync("ReceiveMessage", new object[] { cardNumber });
+                        return;
+                    }
+
+                    var user = _eflContext.User.Where(u => u.Cards.Contains(card)).First();
+
+                    if (user == null)
+                    {
+                        _loggerRFIDScanner.LogWarning($"Card found with id:{card.CardId}, but user not, why isn't it linked?");
+                        return;
+                    }
+
+                    Presence presence = new Presence { TimestampScan = DateTime.Now, User = user };
+
+                    _eflContext.Presence.Add(presence);
+                    _eflContext.SaveChanges();
+
+                    //TODO send presence id to frontend.
+
+                    _loggerRFIDScanner.LogInformation($"Added new user presence with id {presence.PresenceId}");
+                }
+            }
+            catch (Exception ex)
+            {
+                _loggerRFIDScanner.LogError(ex, $"Error occured while processing card scan for cardcode: {cardNumber}");
             }
         }
     }

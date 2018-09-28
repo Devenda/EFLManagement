@@ -9,7 +9,7 @@ services:
     environment:
       - SSH_HOSTUSER=ecofablab
       - SSH_HOSTNAME=51.38.233.37 #67.205.12.211 #chondu.dreamhost.com
-      - SSH_HOSTPORT=33322 # Non standard SSH port
+      - SSH_HOSTPORT=8228 # Non standard SSH port
       - SSH_TUNNEL_REMOTE=3306
       - SSH_TUNNEL_HOST=208.97.161.118 #mysql.ecofablab.be
       - SSH_TUNNEL_LOCAL=3306 #mysql.ecofablab.be mysql port
@@ -27,7 +27,7 @@ services:
     environment:
       - SSH_HOSTUSER=ecofablab
       - SSH_HOSTNAME=51.38.233.37 #67.205.12.211 #chondu.dreamhost.com
-      - SSH_HOSTPORT=33322 # Non standard SSH port
+      - SSH_HOSTPORT=8228 # Non standard SSH port
       - SSH_TUNNEL_REMOTE=4444
       - SSH_TUNNEL_HOST=host.docker.internal #resolves to ip of host
       - SSH_TUNNEL_LOCAL=44305 #API port
