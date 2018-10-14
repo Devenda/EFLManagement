@@ -15,9 +15,9 @@ namespace EFLManagementAPI.Hubs
             _context = context;
         }
 
-        public async Task SendMessage(int presenceId)
+        public async Task SendNewPresenceReceived(string userName)
         {
-            await _context.Clients.All.SendAsync("ReceiveMessage", presenceId);
+            await _context.Clients.All.SendAsync("newPresenceReceived", userName);
         }
     }
 }

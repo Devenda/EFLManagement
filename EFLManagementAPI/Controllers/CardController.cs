@@ -69,11 +69,12 @@ namespace EFLManagementAPI.Controllers
 
             return card;
         }
+
         [HttpPost]
         [Route("test")]
         public async Task<ActionResult> SendTestCardScan(string code)
         {
-            await _cardHub.SendMessage(code);
+            await _cardHub.SendNewCardReceived(code);
 
             return StatusCode(200);
         }

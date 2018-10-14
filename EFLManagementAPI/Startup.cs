@@ -68,6 +68,7 @@ namespace EFLManagementAPI
 
             //SignalR hubs
             services.AddTransient<CardHub>();
+            services.AddTransient<PresenceHub>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -98,6 +99,7 @@ namespace EFLManagementAPI
             app.UseSignalR(routes =>
             {
                 routes.MapHub<CardHub>("/cardhub");
+                routes.MapHub<PresenceHub>("/presencehub");
             });
             app.UseMvc();            
         }

@@ -15,9 +15,9 @@ namespace EFLManagementAPI.Hubs
             _context = context;
         }
 
-        public async Task SendMessage(string code)
+        public async Task SendNewCardReceived(string code)
         {
-            await _context.Clients.All.SendAsync("ReceiveMessage", code);
+            await _context.Clients.All.SendAsync("newCardReceived", code);
         }
     }
 }

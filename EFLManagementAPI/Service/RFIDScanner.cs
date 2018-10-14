@@ -9,6 +9,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -57,6 +58,22 @@ namespace EFLManagement.Services
         public Task StartAsync(CancellationToken cancellationToken)
         {
             _loggerRFIDScanner.LogInformation($"Starting RFIDScanner");
+
+            //_loggerRFIDScanner.LogInformation($"root directory: {Directory.GetCurrentDirectory()}");
+            //foreach (var item in Directory.GetFiles(Directory.GetCurrentDirectory()))
+            //{
+            //    _loggerRFIDScanner.LogInformation($"file: {item}");
+            //}
+
+            //foreach (var dir in Directory.GetDirectories(Directory.GetCurrentDirectory()))
+            //{
+            //    _loggerRFIDScanner.LogInformation($"directory: {dir}");
+
+            //    foreach (var item in Directory.GetFiles(dir))
+            //    {
+            //        _loggerRFIDScanner.LogInformation($"file: {item}");
+            //    }
+            //}
 
             _keyboard = new Keyboard(new InputEvent(_eventPath));
             _keyboard.ButtonDownEvent += Keyboard_ButtonDownEvent;
