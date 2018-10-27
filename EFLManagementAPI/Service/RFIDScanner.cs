@@ -112,19 +112,24 @@ namespace EFLManagement.Services
             }
         }
 
-        private void ProcessCardScan(string cardNumber)
+        private async void ProcessCardScan(string cardNumber)
         {
             try
             {
                 using (var scope = _scopeFactory.CreateScope())
                 {
                     EFLContext _eflContext = scope.ServiceProvider.GetRequiredService<EFLContext>();
+                    CardHub _cardHub = scope.ServiceProvider.GetRequiredService<CardHub>();
+                    PresenceHub _presenceHub = scope.ServiceProvider.GetRequiredService<PresenceHub>();
+
 
                     var card = _eflContext.Card.Where(c => c.CardCode == cardNumber).FirstOrDefault();
                     if (card == null)
                     {
+                        //TODO send to presence hub and process there or add new sendXXX method in hub
                         _loggerRFIDScanner.LogWarning($"Unregistered card scanned, will be send to client for registration.");
-                        _cardHubManager.SendAllAsync("ReceiveMessage", new object[] { cardNumber });
+                        await _cardHub.SendNewCardReceived(cardNumber);
+                        //_cardHubManager.SendAllAsync("ReceiveMessage", new object[] { cardNumber });
                         return;
                     }
 
@@ -141,7 +146,8 @@ namespace EFLManagement.Services
                     _eflContext.Presence.Add(presence);
                     _eflContext.SaveChanges();
 
-                    //TODO send presence id to frontend.
+                    //Send presence id to frontend.
+                    await _presenceHub.SendNewPresenceReceived(user.Name);
 
                     _loggerRFIDScanner.LogInformation($"Added new user presence with id {presence.PresenceId}");
                 }
