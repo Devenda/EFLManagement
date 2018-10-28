@@ -4,6 +4,7 @@ using EFLManagementAPI.Hubs;
 using EFLManagementAPI.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,10 +19,14 @@ namespace EFLManagementAPI.Controllers
         private readonly EFLContext _eflContext;
         private readonly CardHub _cardHub;
 
-        public CardController(EFLContext eflContext, CardHub cardHub)
+        private readonly ILogger<CardController> _logger;
+
+        public CardController(EFLContext eflContext, CardHub cardHub, ILogger<CardController> logger)
         {
             _eflContext = eflContext;
             _cardHub = cardHub;
+
+            _logger = logger;
         }
 
         [HttpGet]
@@ -55,14 +60,24 @@ namespace EFLManagementAPI.Controllers
 
             if (user == null) return StatusCode(400, new Error { Message = $"No User exists with id {id}" });
 
-            //TODO check if card is already linked
-
-            var card = new Card
+            //Check if card exists but is not yet linked
+            var card = _eflContext.Card.Where(c => c.CardCode == cardCode).FirstOrDefault();
+            if (card != null)
             {
-                CardCode = cardCode,
-                User = user,
-                TimestampRegistration = DateTime.Now
-            };
+                var message = $"Card is already registered for user {user.Name} {user.Surname}(id: {user.UserId})!";
+                _logger.LogWarning(message);
+
+                return StatusCode(400, new Error { Message = message });
+            }
+            else
+            {
+                card = new Card
+                {
+                    CardCode = cardCode,
+                    User = user,
+                    TimestampRegistration = DateTime.Now
+                };
+            }
 
             _eflContext.Card.Add(card);
             _eflContext.SaveChanges();

@@ -4,12 +4,12 @@ using EFLManagementAPI.Hubs;
 using Input_event;
 using Input_event.InputDevices;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -28,15 +28,11 @@ namespace EFLManagement.Services
         private readonly HubLifetimeManager<CardHub> _cardHubManager;
         private readonly HubLifetimeManager<PresenceHub> _presenceHubManager;
 
+        private readonly Dictionary<string, string> _userCardCache;
+        private readonly Dictionary<string, DateTime> _presenceCache;
 
-        public RFIDScanner(IServiceScopeFactory scopeFactory, ILogger<RFIDScanner> loggerRFIDScanner,
-            HubLifetimeManager<CardHub> cardHubManager, HubLifetimeManager<PresenceHub> presenceHubManager)
-        {
-            _scopeFactory = scopeFactory;
-            _loggerRFIDScanner = loggerRFIDScanner;
-            _cardHubManager = cardHubManager;
-            _presenceHubManager = presenceHubManager;
-        }
+        private List<char> _cardNumberPartial = new List<char>();
+        private string _cardNumber;
 
         readonly Dictionary<Keyboard.InputEventCode, char> buttonValues = new Dictionary<Keyboard.InputEventCode, char>()
         {
@@ -52,10 +48,19 @@ namespace EFLManagement.Services
             {Keyboard.InputEventCode.KEY_9, '9' },
         };
 
-        private List<char> _cardNumberPartial = new List<char>();
-        private string _cardNumber;
+        public RFIDScanner(IServiceScopeFactory scopeFactory, ILogger<RFIDScanner> loggerRFIDScanner,
+            HubLifetimeManager<CardHub> cardHubManager, HubLifetimeManager<PresenceHub> presenceHubManager)
+        {
+            _scopeFactory = scopeFactory;
+            _loggerRFIDScanner = loggerRFIDScanner;
+            _cardHubManager = cardHubManager;
+            _presenceHubManager = presenceHubManager;
 
-        public Task StartAsync(CancellationToken cancellationToken)
+            _userCardCache = new Dictionary<string, string>();
+            _presenceCache = new Dictionary<string, DateTime>();
+        }
+
+        public async Task StartAsync(CancellationToken cancellationToken)
         {
             _loggerRFIDScanner.LogInformation($"Starting RFIDScanner");
 
@@ -75,13 +80,14 @@ namespace EFLManagement.Services
             //    }
             //}
 
+            //Pull initial cache
+            await RefreshUserCardCacheAsync();
+
             _keyboard = new Keyboard(new InputEvent(_eventPath));
             _keyboard.ButtonDownEvent += Keyboard_ButtonDownEvent;
             _keyboard.Start();
 
             _loggerRFIDScanner.LogInformation($"Started RFIDScanner");
-
-            return Task.CompletedTask;
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
@@ -122,32 +128,56 @@ namespace EFLManagement.Services
                     CardHub _cardHub = scope.ServiceProvider.GetRequiredService<CardHub>();
                     PresenceHub _presenceHub = scope.ServiceProvider.GetRequiredService<PresenceHub>();
 
-
-                    var card = _eflContext.Card.Where(c => c.CardCode == cardNumber).FirstOrDefault();
-                    if (card == null)
+                    var userName = _userCardCache[cardNumber];
+                    if (string.IsNullOrEmpty(userName))
                     {
-                        //TODO send to presence hub and process there or add new sendXXX method in hub
-                        _loggerRFIDScanner.LogWarning($"Unregistered card scanned, will be send to client for registration.");
+                        _loggerRFIDScanner.LogInformation($"Could not find user for {cardNumber} in cache, looking in DB and refreshing cache");
+
+                        userName = _eflContext.User.Where(u => u.Cards.Select(c => c.CardCode == cardNumber).Any()).FirstOrDefault()?.Name;
+                        if (!string.IsNullOrEmpty(userName))
+                        {
+                            _loggerRFIDScanner.LogInformation($"Did find user in DB, refreshing cache.");
+                            RefreshUserCardCacheAsync();
+                        }
+                    }
+
+                    if (string.IsNullOrEmpty(userName))
+                    {
+                        _loggerRFIDScanner.LogWarning($"No user found with a card with cardcode: {cardNumber}, sending to frontend for registration.");
                         await _cardHub.SendNewCardReceived(cardNumber);
-                        //_cardHubManager.SendAllAsync("ReceiveMessage", new object[] { cardNumber });
+
                         return;
                     }
 
-                    var user = _eflContext.User.Where(u => u.Cards.Contains(card)).First();
-
-                    if (user == null)
+                    //Check if user already badged in the last hour                    
+                    if (ManagePresenceForCard(cardNumber) != null)
                     {
-                        _loggerRFIDScanner.LogWarning($"Card found with id:{card.CardId}, but user not, why isn't it linked?");
+                        //user already present
+                        await _presenceHub.SendNewPresenceReceived($"Welkom terug {userName}!");
                         return;
                     }
 
-                    Presence presence = new Presence { TimestampScan = DateTime.Now, User = user };
+                    //Send presence id to frontend with message.
+                    string message = "";
+                    if (DateTime.Now.Hour < 12)
+                    {
+                        message = "Goedemorgen";
+                    }
+                    else if (DateTime.Now.Hour < 17)
+                    {
+                        message = "Goedemiddag";
+                    }
+                    else
+                    {
+                        message = "Goedeavond";
+                    }
+                    await _presenceHub.SendNewPresenceReceived($"{message}, {userName}!");
 
+                    //Add to db
+                    User user = _eflContext.User.Where(u => u.Cards.Select(c => c.CardCode == cardNumber).Any()).First();
+                    Presence presence = new Presence { TimestampScan = DateTime.Now, User = user };
                     _eflContext.Presence.Add(presence);
                     _eflContext.SaveChanges();
-
-                    //Send presence id to frontend.
-                    await _presenceHub.SendNewPresenceReceived(user.Name);
 
                     _loggerRFIDScanner.LogInformation($"Added new user presence with id {presence.PresenceId}");
                 }
@@ -156,6 +186,75 @@ namespace EFLManagement.Services
             {
                 _loggerRFIDScanner.LogError(ex, $"Error occured while processing card scan for cardcode: {cardNumber}");
             }
+        }
+
+        private async Task RefreshUserCardCacheAsync()
+        {
+            _loggerRFIDScanner.LogInformation($"Start refresh cache");
+
+            try
+            {
+                using (var scope = _scopeFactory.CreateScope())
+                {
+                    EFLContext _eflContext = scope.ServiceProvider.GetRequiredService<EFLContext>();
+
+                    var allUsers = await _eflContext.User.Include(u => u.Cards)
+                                                         .ToListAsync();
+                    if (!allUsers.Any())
+                    {
+                        _loggerRFIDScanner.LogWarning($"No users could be find, which is strange...");
+                        return;
+                    }
+
+                    foreach (User user in allUsers)
+                    {
+                        if (user.Cards.Any())
+                        {
+                            foreach (Card card in user.Cards)
+                            {
+                                _userCardCache.Add(card.CardCode, user.Name);
+                            }
+                        }
+                    }
+
+                    _loggerRFIDScanner.LogInformation($"Cache contains:");
+                    foreach (var e in _userCardCache)
+                    {
+                        _loggerRFIDScanner.LogInformation($"Card: {e.Key}, User: {e.Value}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _loggerRFIDScanner.LogError(ex, $"Error occured while refreshing user cache");
+            }
+        }
+
+        /// <summary>
+        /// Add/Update presence for card
+        /// If to recent return datetime
+        /// </summary>
+        /// <param name="cardCode"></param>
+        /// <returns></returns>
+        private DateTime? ManagePresenceForCard(string cardCode)
+        {
+            if (_presenceCache.ContainsKey(cardCode))
+            {
+                var regTimeStamp = _presenceCache[cardCode];
+
+                if (regTimeStamp < DateTime.Now.AddHours(-1))
+                {
+                    _presenceCache[cardCode] = DateTime.Now;
+
+                    return null;
+                }
+
+                return regTimeStamp;
+            }
+
+            _presenceCache.Add(cardCode, DateTime.Now);
+
+            return null;
         }
     }
 }
