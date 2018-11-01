@@ -1,4 +1,5 @@
 ﻿using EFLManagementAPI.Context;
+using EFLManagementAPI.Entities;
 using EFLManagementAPI.Hubs;
 using EFLManagementAPI.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -38,6 +39,17 @@ namespace EFLManagementAPI.Controllers
             var presences = _eflContext.Presence.Where(p => p.TimestampScan >= DateTime.Now.AddMonths(-1 * months))
                                                 .GroupBy(p => p.TimestampScan.Date)
                                                 .Select(p => new Day { Date = p.Key, Presences = p.Count() })
+                                                .ToList();
+
+            return presences;
+        }
+
+        [HttpGet]
+        [Route("date")]
+        public ActionResult<IList<User>> GetPresentUsersForDate(DateTime date)
+        {
+            var presences = _eflContext.Presence.Where(p => p.TimestampScan.Date == date.Date)
+                                                .Select(p => p.User)
                                                 .ToList();
 
             return presences;
