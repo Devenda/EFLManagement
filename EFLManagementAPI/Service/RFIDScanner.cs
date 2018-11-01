@@ -128,6 +128,7 @@ namespace EFLManagement.Services
                     CardHub _cardHub = scope.ServiceProvider.GetRequiredService<CardHub>();
                     PresenceHub _presenceHub = scope.ServiceProvider.GetRequiredService<PresenceHub>();
 
+                    //Get User
                     var userName = "";
                     if (_userCardCache.ContainsKey(cardNumber))
                     {                        
@@ -157,13 +158,16 @@ namespace EFLManagement.Services
                         return;
                     }
 
-                    //Check if user already badged in the last hour                    
-                    if (ManagePresenceForCard(cardNumber) != null)
+                    if (userName != "Gast")
                     {
-                        //user already present
-                        await _presenceHub.SendNewPresenceReceived($"Welkom terug {userName}!");
-                        return;
-                    }
+                        //Check if user already badged in the last hour                    
+                        if (ManagePresenceForCard(cardNumber) != null)
+                        {
+                            //user already present
+                            await _presenceHub.SendNewPresenceReceived($"Welkom terug {userName}!");
+                            return;
+                        }
+                    }                    
 
                     //Send presence id to frontend with message.
                     string message = "";

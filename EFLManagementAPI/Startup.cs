@@ -1,19 +1,18 @@
-﻿using EFLManagementAPI.Context;
+﻿using EFLManagement.Services;
+using EFLManagementAPI.Context;
+using EFLManagementAPI.Hubs;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using NJsonSchema;
 using NSwag.AspNetCore;
 using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 using System;
-using EFLManagementAPI.Hubs;
-using Microsoft.AspNetCore.SignalR;
-using Newtonsoft.Json.Serialization;
-using Newtonsoft.Json;
-using EFLManagement.Services;
 
 namespace EFLManagementAPI
 {
@@ -34,7 +33,8 @@ namespace EFLManagementAPI
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
                     //https://stackoverflow.com/questions/34753498/self-referencing-loop-detected-in-asp-net-core
-                    .AddJsonOptions(options => {
+                    .AddJsonOptions(options =>
+                    {
                         options.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
                         options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
                     });
@@ -49,11 +49,12 @@ namespace EFLManagementAPI
 
             services.AddDbContextPool<EFLContext>( // replace "YourDbContext" with the class name of your DbContext
                 options => options.UseMySql(connString, // replace with your Connection String
-                    mysqlOptions =>
-                    {
-                        mysqlOptions.ServerVersion(new Version(5, 6, 34), ServerType.MySql); // replace with your Server Version and Type
-                    }
-            ));
+                                            mysqlOptions =>
+                                            {
+                                                // replace with your Server Version and Type
+                                                mysqlOptions.ServerVersion(new Version(5, 6, 34), ServerType.MySql);
+                                            })
+                                  .EnableSensitiveDataLogging());
 
             // Configure CORS
             services.AddCors(corsOptions => corsOptions.AddPolicy(
@@ -74,7 +75,7 @@ namespace EFLManagementAPI
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
-            
+
 
             if (env.IsDevelopment())
             {
@@ -101,7 +102,7 @@ namespace EFLManagementAPI
                 routes.MapHub<CardHub>("/cardhub");
                 routes.MapHub<PresenceHub>("/presencehub");
             });
-            app.UseMvc();            
+            app.UseMvc();
         }
     }
 }
