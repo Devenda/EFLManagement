@@ -19,5 +19,10 @@ namespace EFLManagementAPI.Hubs
         {
             await _context.Clients.All.SendAsync("newPresenceReceived", userName);
         }
+
+        public async Task SendUnknownCardReceived(string userName)
+        {
+            await _context.Clients.All.SendAsync("unknownCardReceived", userName);
+        }
     }
 }

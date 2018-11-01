@@ -128,15 +128,22 @@ namespace EFLManagement.Services
                     CardHub _cardHub = scope.ServiceProvider.GetRequiredService<CardHub>();
                     PresenceHub _presenceHub = scope.ServiceProvider.GetRequiredService<PresenceHub>();
 
-                    var userName = _userCardCache[cardNumber];
-                    if (string.IsNullOrEmpty(userName))
+                    var userName = "";
+                    if (_userCardCache.ContainsKey(cardNumber))
+                    {                        
+                        userName = _userCardCache[cardNumber];
+                        _loggerRFIDScanner.LogInformation($"Found user {userName} in cache with cardNumber {cardNumber}.");
+                    }
+                    else
                     {
-                        _loggerRFIDScanner.LogInformation($"Could not find user for {cardNumber} in cache, looking in DB and refreshing cache");
-
-                        userName = _eflContext.User.Where(u => u.Cards.Select(c => c.CardCode == cardNumber).Any()).FirstOrDefault()?.Name;
+                        _loggerRFIDScanner.LogInformation($"Could not find user for {cardNumber} in cache, looking in DB.");
+                        userName = _eflContext.Card.Include(c => c.User)
+                                                   .Where(c => c.CardCode == cardNumber)
+                                                   .FirstOrDefault()?.User.Name;
+                        
                         if (!string.IsNullOrEmpty(userName))
                         {
-                            _loggerRFIDScanner.LogInformation($"Did find user in DB, refreshing cache.");
+                            _loggerRFIDScanner.LogInformation($"Found user {userName} in DB, refreshing cache.");
                             RefreshUserCardCacheAsync();
                         }
                     }
@@ -145,6 +152,7 @@ namespace EFLManagement.Services
                     {
                         _loggerRFIDScanner.LogWarning($"No user found with a card with cardcode: {cardNumber}, sending to frontend for registration.");
                         await _cardHub.SendNewCardReceived(cardNumber);
+                        await _presenceHub.SendUnknownCardReceived(cardNumber);
 
                         return;
                     }
@@ -174,7 +182,11 @@ namespace EFLManagement.Services
                     await _presenceHub.SendNewPresenceReceived($"{message}, {userName}!");
 
                     //Add to db
-                    User user = _eflContext.User.Where(u => u.Cards.Select(c => c.CardCode == cardNumber).Any()).First();
+                    _loggerRFIDScanner.LogInformation($"Looking for user with cardcode: {cardNumber}.");
+                    User user = _eflContext.Card.Include(c => c.User)
+                                                   .Where(c => c.CardCode == cardNumber)
+                                                   .FirstOrDefault()?.User;
+                    _loggerRFIDScanner.LogInformation($"Adding presence for {user.Name}");
                     Presence presence = new Presence { TimestampScan = DateTime.Now, User = user };
                     _eflContext.Presence.Add(presence);
                     _eflContext.SaveChanges();
@@ -202,10 +214,11 @@ namespace EFLManagement.Services
                                                          .ToListAsync();
                     if (!allUsers.Any())
                     {
-                        _loggerRFIDScanner.LogWarning($"No users could be find, which is strange...");
+                        _loggerRFIDScanner.LogWarning($"No users could be found, which is strange...");
                         return;
                     }
 
+                    _userCardCache.Clear();
                     foreach (User user in allUsers)
                     {
                         if (user.Cards.Any())
@@ -242,7 +255,7 @@ namespace EFLManagement.Services
             {
                 var regTimeStamp = _presenceCache[cardCode];
 
-                if (regTimeStamp < DateTime.Now.AddHours(-1))
+                if (regTimeStamp < DateTime.Now.AddHours(-4))
                 {
                     _presenceCache[cardCode] = DateTime.Now;
 
