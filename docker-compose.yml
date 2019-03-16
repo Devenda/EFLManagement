@@ -4,38 +4,14 @@ services:
   eflmanagementapi:
     image: ${DOCKER_REGISTRY}/playground 
 
-  localtunnel:    
-    container_name: localtunnel
-    environment:
-      - SSH_HOSTUSER=ecofablab
-      - SSH_HOSTNAME=51.38.233.37 #67.205.12.211 #chondu.dreamhost.com
-      - SSH_HOSTPORT=8228 # Non standard SSH port
-      - SSH_TUNNEL_REMOTE=3306
-      - SSH_TUNNEL_HOST=208.97.161.118 #mysql.ecofablab.be
-      - SSH_TUNNEL_LOCAL=3306 #mysql.ecofablab.be mysql port
-      - SSH_MODE=-Ng -L #Local forward mode (vs -R remote forward mode)
-      - SSH_KEY_FILE=/ssh/id_rsa  
+  eflmanagementdb:
+    image: mysql
+    command: --default-authentication-plugin=mysql_native_password
     restart: always
-    volumes:
-      - ./Tunnel:/key #mount host current directory ./sshTunnel to container /key
-    dns:
-      - 8.8.8.8
-      - 4.2.2.4
-
-  remotetunnel:
-    container_name: remotetunnel
     environment:
-      - SSH_HOSTUSER=ecofablab
-      - SSH_HOSTNAME=51.38.233.37 #67.205.12.211 #chondu.dreamhost.com
-      - SSH_HOSTPORT=8228 # Non standard SSH port
-      - SSH_TUNNEL_REMOTE=4444
-      - SSH_TUNNEL_HOST=host.docker.internal #resolves to ip of host
-      - SSH_TUNNEL_LOCAL=44305 #API port
-      - SSH_MODE=-R #Local forward mode (vs -R remote forward mode)
-      - SSH_KEY_FILE=/ssh/id_rsa  
-    restart: always
-    volumes:
-      - ./Tunnel:/key #mount host current directory ./sshTunnel to container /key
-    # dns: # when using DNS does not resolve host.docker.internal
-    # - 8.8.8.8
-    # - 4.2.2.4
+      MYSQL_ROOT_PASSWORD: myrandompw
+      MYSQL_USER: myrandomuser
+      MYSQL_PASSWORD: myrandompw
+    ports:
+      - "3306:3306"
+ 

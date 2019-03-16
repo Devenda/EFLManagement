@@ -1,4 +1,5 @@
-﻿using EFLManagementAPI.Context;
+﻿using EFLManagementAPI.Business;
+using EFLManagementAPI.Context;
 using EFLManagementAPI.Entities;
 using EFLManagementAPI.Hubs;
 using EFLManagementAPI.Models;
@@ -21,12 +22,16 @@ namespace EFLManagementAPI.Controllers
 
         private readonly ILogger<CardController> _logger;
 
-        public CardController(EFLContext eflContext, CardHub cardHub, ILogger<CardController> logger)
+        private readonly BLCard _blCard;
+
+        public CardController(EFLContext eflContext, CardHub cardHub, ILogger<CardController> logger, BLCard blCard)
         {
             _eflContext = eflContext;
             _cardHub = cardHub;
 
             _logger = logger;
+
+            _blCard = blCard;
         }
 
         [HttpGet]
@@ -89,7 +94,7 @@ namespace EFLManagementAPI.Controllers
         [Route("test")]
         public async Task<ActionResult> SendTestCardScan(string code)
         {
-            await _cardHub.SendNewCardReceived(code);
+            _blCard.ProcessCardScan(code); 
 
             return StatusCode(200);
         }

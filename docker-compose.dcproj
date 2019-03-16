@@ -15,9 +15,6 @@
     </None>
     <None Include="docker-compose.yml" />
     <None Include=".dockerignore" />
-    <None Include="Tunnel\dockerfile" />
-    <None Include="Tunnel\entrypoint.sh" />
-    <None Include="Tunnel\id_rsa" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="NewFolder1\" />

@@ -9,6 +9,7 @@
 
 *.ppk
 */id_rsa
+*.yml
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs

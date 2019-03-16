@@ -1,4 +1,5 @@
 ﻿using EFLManagement.Services;
+using EFLManagementAPI.Business;
 using EFLManagementAPI.Context;
 using EFLManagementAPI.Hubs;
 using Microsoft.AspNetCore.Builder;
@@ -70,6 +71,7 @@ namespace EFLManagementAPI
             //SignalR hubs
             services.AddTransient<CardHub>();
             services.AddTransient<PresenceHub>();
+            services.AddTransient<BLCard>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
